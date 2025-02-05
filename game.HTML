@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پرش های استاد صباغ</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        canvas { background: #cce6ff; display: block; margin: auto; border: 2px solid black; }
+        #score { font-size: 20px; margin-top: 10px; }
+        #gameOverText {
+            font-size: 30px;
+            color: red;
+            display: none; /* مخفی باشد */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>پرش های استاد صباغ!</h1>
+    <canvas id="gameCanvas" width="500" height="300"></canvas>
+    <h2 id="score">امتیاز: 0 | رکورد: 0</h2>
+    <h2 id="gameOverText">صباغ کوشته شد</h2>
+
+    <script>
+        let canvas = document.getElementById("gameCanvas");
+        let ctx = canvas.getContext("2d");
+
+        let img = new Image();
+        img.src = "me.png"; // عکس خودت را جایگزین کن
+
+        let player = { x: 50, y: 200, size: 50, dy: 0, gravity: 0.5, jumpPower: -10, isJumping: false };
+
+        let obstacle = { x: 500, y: 220, width: 40, height: 40, speed: 5 }; // مانع
+
+        let score = 0;
+        let highScore = localStorage.getItem("highScore") || 0; // ذخیره در مرورگر
+        let gameOver = false;
+
+        function drawPlayer() {
+            ctx.drawImage(img, player.x, player.y, player.size, player.size);
+        }
+
+        function drawObstacle() {
+            ctx.fillStyle = "brown";
+            ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        }
+
+        function jump() {
+            if (!player.isJumping) {
+                player.dy = player.jumpPower;
+                player.isJumping = true;
+            }
+        }
+
+        function checkCollision() {
+            return (
+                player.x < obstacle.x + obstacle.width &&
+                player.x + player.size > obstacle.x &&
+                player.y + player.size > obstacle.y
+            );
+        }
+
+        function update() {
+            if (gameOver) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // حرکت بازیکن
+            player.y += player.dy;
+            player.dy += player.gravity;
+
+            if (player.y > 200) {  
+                player.y = 200;
+                player.isJumping = false;
+            }
+
+            // حرکت مانع
+            obstacle.x -= obstacle.speed;
+            if (obstacle.x < -obstacle.width) {
+                obstacle.x = 500; // وقتی مانع خارج شد، دوباره از سمت راست بیاید
+                score += 10; // امتیاز اضافه شود
+                document.getElementById("score").innerText = `امتیاز: ${score} | رکورد: ${highScore}`;
+            }
+
+            // بررسی برخورد
+            if (checkCollision()) {
+                gameOver = true;
+                document.getElementById("gameOverText").style.display = "block";
+
+                // ذخیره رکورد
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem("highScore", highScore); // ذخیره در مرورگر
+                }
+            }
+
+            drawPlayer();
+            drawObstacle();
+            requestAnimationFrame(update);
+        }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.code === "Space") jump();
+        });
+
+        document.getElementById("score").innerText = `امتیاز: ${score} | رکورد: ${highScore}`;
+        update();
+    </script>
+
+</body>
+</html>
